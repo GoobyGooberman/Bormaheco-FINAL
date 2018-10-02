@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load staticfiles %}
+    {% load humanize %}
+    {% load templatetags %}
+    {% csrf_token %}
+    <meta charset="UTF-8">
+    <title>Bormaheco Inc. | Equipment</title>
+    <!-- Imports JQuery -->
+    <script src="{% static 'js/jquery-3.1.1.min.js' %}"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+
+    <!-- Date Picker -->
+    <script src="{% static 'js/bootstrap-datepicker.min.js' %}">
+    </script>
+    <script src="{% static 'js/bootstrap-datepicker.js' %}">
+    </script>
+    <link rel="stylesheet" href="{% static 'css/bootstrap-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap-datepicker3.min.css' %}">
+
+    <!-- Global Login -->
+    <script type="text/javascript"> var loginurl = {% url 'login' %};</script>
+    <script src="{% static 'js/login.js' %}"></script>
+
+    <link rel="icon" href="{% static 'images/icon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+	<link rel="stylesheet" href="{% static 'css/equipment.css'%}">
+</head>
+<body>
+    <nav class="navbar navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/">
+                    <img style="height: 250%" src="{% static 'images/bormaheco.png' %}">
+                </a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="{% url 'mainpage' %}" id="navlink">Home</a></li>
+                <li><a href="{% url 'equipment:mainpage' %}" id="navlink">Equipment</a></li>
+                {% if request.user.is_authenticated %}
+                {% if request.user.user_type == CU or request.user.user_type == FI or request.user.user_type == EM %}
+                        <li><a href="{% url 'rental:transactions' %}" id="navlink">Transactions</a></li>
+                    {% endif %}
+                {% endif %}
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                {% if request.user.is_superuser == False %}
+                    {% if request.user.useraccount.user_type == 'CU' or request.user.useraccount.user_type == Null %}
+                    <li>
+                        <div class="dropdown">
+                            <a id="cart" type="button" data-toggle="dropdown">
+                                <span class="glyphicon glyphicon-shopping-cart"></span></a>
+                            <ul class="dropdown-menu cart" id="cartDropdown">
+                                {% get_cart request %}
+                                {% cart_length request as num %}
+                                {% if num > 0 %}
+                                    <a type="button" style="display:block; margin-top: 10px; margin-bottom: 5px"
+                                 href="{% url 'rental:checkout' %}" class="btn btn-warning text-center">Checkout</a>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </li>
+                    {% endif %}
+                {% endif %}
+                {% if request.user.is_authenticated %}
+                    <li>
+                        <div class="dropdown">
+                            <a class="dropdown-toggle" id="userbutton" type="button" data-toggle="dropdown">
+                                {{ request.user.username }}
+                                <span id="arrow" class="glyphicon glyphicon-triangle-bottom"></span>
+                            </a>
+                            <ul class="dropdown-menu" id="usertools">
+                                {% if request.user.is_superuser %}
+                                    <li><a href="{% url 'admin:index' %}">Admin Page</a></li>
+                                {% endif %}
+                                <li><a href="{% url 'logout' %}">Logout</a></li>
+                            </ul>
+                        </div></li>
+                {% else %}
+                    <li>
+                        <div class="dropdown" id="logindiv">
+                            <a class="dropdown-toggle" id="userbutton" type="button" data-toggle="dropdown">
+                                Login
+                                <span id="arrow" class="glyphicon glyphicon-triangle-bottom"></span>
+                            </a>
+                            <ul id="usertools" class="dropdown-menu">
+                                <li><label for="login_username_input">Username:</label>
+                                <input placeholder="Username" class="form-control" id="login_username_input"
+                                       type="text"></li>
+                                <li><label for="login_password_input">Password:</label>
+                                <input placeholder="Password" class="form-control" id="login_password_input"
+                                       type="password"></li>
+                                <p class="text-danger" id="login_error" hidden></p>
+                                <li><button class="btn btn-default center-block" type="button"
+                                            id="login">Login</button></li>
+                            </ul>
+                        </div></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <div class="row" id="pagebody">
+        <div class="container-fluid">
+            <div class="col-md-2" id="div2">
+                <h1 id="filterheader">Type</h1>
+                    <div class="list-group">
+                        <a href="{% url 'equipment:filterequipment' types='AL' %}" class="list-group-item {% if types == 'AL'%}
+                        active
+                        {% elif types == null %}
+                        active
+                        {% endif %}">All</a>
+                        <a href="{% url 'equipment:filterequipment' types='AC' %}" class="list-group-item {% if types == 'AC'%}
+                        active
+                        {% endif %}">Air Compressors</a>
+                        <a href="{% url 'equipment:filterequipment' types='BL' %}" class="list-group-item {% if types == 'BL'%}
+                        active
+                        {% endif %}">Backhoe Loaders</a>
+                        <a href="{% url 'equipment:filterequipment' types='BR' %}" class="list-group-item {% if types == 'BR'%}
+                        active
+                        {% endif %}">Breakers</a>
+                        <a href="{% url 'equipment:filterequipment' types='BD' %}" class="list-group-item {% if types == 'BD'%}
+                        active
+                        {% endif %}">Bulldozers</a>
+                        <a href="{% url 'equipment:filterequipment' types='CR' %}" class="list-group-item {% if types == 'CR'%}
+                        active
+                        {% endif %}">Cranes</a>
+                        <a href="{% url 'equipment:filterequipment' types='DT' %}" class="list-group-item {% if types == 'DT'%}
+                        active
+                        {% endif %}">Dump Trucks</a>
+                        <a href="{% url 'equipment:filterequipment' types='EX' %}" class="list-group-item {% if types == 'EX'%}
+                        active
+                        {% endif %}">Excavators</a>
+                        <a href="{% url 'equipment:filterequipment' types='FT' %}" class="list-group-item {% if types == 'FT'%}
+                        active
+                        {% endif %}">Flatbed Trucks</a>
+                        <a href="{% url 'equipment:filterequipment' types='FL' %}" class="list-group-item {% if types == 'FL'%}
+                        active
+                        {% endif %}">Forklifts</a>
+                        <a href="{% url 'equipment:filterequipment' types='GS' %}" class="list-group-item {% if types == 'GS'%}
+                        active
+                        {% endif %}">Generating Sets</a>
+                        <a href="{% url 'equipment:filterequipment' types='LB' %}" class="list-group-item {% if types == 'LB'%}
+                        active
+                        {% endif %}">Low Bed Trailers</a>
+                        <a href="{% url 'equipment:filterequipment' types='MT' %}" class="list-group-item {% if types == 'MT'%}
+                        active
+                        {% endif %}">Manlift Trucks</a>
+                        <a href="{% url 'equipment:filterequipment' types='MC' %}" class="list-group-item {% if types == 'MC'%}
+                        active
+                        {% endif %}">Motorcycles</a>
+                        <a href="{% url 'equipment:filterequipment' types='PL' %}" class="list-group-item {% if types == 'PL'%}
+                        active
+                        {% endif %}">Payloaders</a>
+                        <a href="{% url 'equipment:filterequipment' types='PM' %}" class="list-group-item {% if types == 'PM'%}
+                        active
+                        {% endif %}">Prime Movers</a>
+                        <a href="{% url 'equipment:filterequipment' types='RG' %}" class="list-group-item {% if types == 'RG'%}
+                        active
+                        {% endif %}">Road Graders</a>
+                        <a href="{% url 'equipment:filterequipment' types='RR' %}" class="list-group-item {% if types == 'RR'%}
+                        active
+                        {% endif %}">Road Rollers</a>
+                        <a href="{% url 'equipment:filterequipment' types='SL' %}" class="list-group-item {% if types == 'SL'%}
+                        active
+                        {% endif %}">Skidsteer Loaders</a>
+                        <a href="{% url 'equipment:filterequipment' types='OT' %}" class="list-group-item {% if types == 'OT'%}
+                        active
+                        {% endif %}">Others</a>
+                    </div>
+
+                {% if request.user.is_superuser %}
+                    <button type="button" data-toggle="modal"
+                            data-target="#addEquipModal" class="btn btn-warning" id="addEquipment">Add Equipment</button>
+                    <!-- Modal -->
+                    <div id="addEquipModal" class="modal fade" role="dialog">
+                        <div class="modal-dialog">
+                            <!-- Modal content-->
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h4 class="modal-title">Add Equipment</h4>
+                                </div>
+                                <div class="modal-body form">
+
+                                        <div class="form-group" id="name_input">
+                                            <label class="control-label" for="eq_name_input">
+                                                Name:</label>
+                                                <input type="text" class="form-control" id="eq_name_input">
+                                                <span class="glyphicon glyphicon-remove form-control-feedback hidden">
+                                                </span>
+                                                <p class="text-danger" id="name_error" hidden></p>
+                                        </div>
+
+                                        <div class="form-group" id="brand_input">
+                                            <label class="control-label" for="eq_brand_input">
+                                                Brand:</label>
+                                                <input type="text" class="form-control" id="eq_brand_input">
+                                                <span class="glyphicon glyphicon-remove form-control-feedback hidden">
+                                                </span>
+                                                <p class="text-danger" id="brand_error" hidden></p>
+                                        </div>
+
+                                        <div class="form-group" id="cost_input">
+                                            <label class="control-label" for="eq_cost_input">
+                                                Acquisition Cost:</label>
+                                                <input type="text" class="form-control number" id="eq_cost_input">
+                                                <span class="glyphicon glyphicon-remove form-control-feedback hidden">
+                                                </span>
+                                                <p class="text-danger" id="cost_error" hidden></p>
+                                        </div>
+
+                                        <div class="form-group" id="details_input">
+                                            <label class="control-label" for="eq_details_input">
+                                                Details:</label>
+                                                <input type="text" class="form-control" id="eq_details_input">
+                                                <span class="glyphicon glyphicon-remove form-control-feedback hidden">
+                                                </span>
+                                                <p class="text-danger" id="details_error" hidden></p>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="control-label" for="eq_type_input">
+                                                Type:</label>
+                                                <select class="form-control" id="eq_type_input" name="eq_type">
+                                                    <option value="AC">Air Compressor</option>
+                                                    <option value="BL">Backhoe Loader</option>
+                                                    <option value="BR">Breaker</option>
+                                                    <option value="BD">Bulldozer</option>
+                                                    <option value="CR">Crane</option>
+                                                    <option value="DT">Dumptruck</option>
+                                                    <option value="EX">Excavator</option>
+                                                    <option value="FT">Flatbed Truck</option>
+                                                    <option value="FL">Forklift</option>
+                                                    <option value="GS">Generating Set</option>
+                                                    <option value="LB">Low Bed Trailer</option>
+                                                    <option value="MT">Manlift Truck</option>
+                                                    <option value="MC">Motorcycle</option>
+                                                    <option value="PL">Payloader</option>
+                                                    <option value="PM">Prime Mover</option>
+                                                    <option value="RG">Road Grader</option>
+                                                    <option value="RR">Road Roller</option>
+                                                    <option value="SL">Skidsteer Loader</option>
+                                                    <option value="OT">Other</option>
+                                                </select>
+                                                <span class="glyphicon glyphicon-remove form-control-feedback hidden">
+                                                </span>
+                                                <p class="text-danger" hidden></p>
+                                        </div>
+
+                                        <div class="form-group" id="hsr_input">
+                                            <label class="control-label" for="eq_hsr_input">
+                                                Hourly Service Rate:</label>
+                                                <input type="text" class="form-control number" id="eq_hsr_input">
+                                                <span class="glyphicon glyphicon-remove form-control-feedback hidden">
+                                                </span>
+                                                <p class="text-danger" id="hsr_error" hidden></p>
+                                        </div>
+
+                                        <div class="form-group" id="img_input">
+                                                <label class="control-label" for="eq_img_input">
+                                                 Image:</label>
+                                                <input type="file" id="eq_img_input" accept=".jpg, .png, .jpeg">
+                                                <span class="glyphicon glyphicon-remove form-control-feedback hidden">
+                                                </span>
+                                                <p class="text-danger" id="img_error" hidden></p>
+                                        </div>
+
+                                        <div class="form-group" id="date_input">
+                                            <div id="dateInput">
+                                                <div class="input-group date">
+                                                    <label class="control-label" for="datedate">
+                                                        Acquisition Date:
+                                                    </label>
+                                                    <input type="text" class="form-control" id="datedate" readonly>
+                                                    <p class="text-danger" id="date_error" hidden></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-warning" id="submitEquipment">Add Equipment</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% endif %}
+            </div>
+
+            <div class="col-md-10 container-fluid" id="div3">
+            {% if equipment.count == 0 %}
+                <h1 class="text-center">No Results!</h1>
+            {% else %}
+                {% for unit in available %}
+
+                    <div class="col-md-3 flex">
+                        <div class="panel panel-primary" id="equipment{{ unit.id }}">
+                            <div class="panel-heading">{{ unit.name }}</div>
+                            <div class="panel-body">
+                                <div class="thumbnail">
+                                    <img src="{% static unit.image.url %}" class="img-responsive"
+                                 style="width:100%" alt="Image"></div>
+                                </div>
+                            <div class="panel-footer text-center"><button type="button" data-toggle="modal"
+                                                                          data-target="#modal{{ unit.id }}"
+                                                                          class="btn btn-default">View Details
+                                <span class="glyphicon glyphicon-search">
+                            </span></button></div>
+                        </div>
+                    </div>
+
+                    <!-- Modal -->
+                    <div id="modal{{ unit.id }}" class="modal fade" role="dialog">
+                        <div class="modal-dialog">
+                            <!-- Modal content-->
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h4 class="modal-title">{{ unit.name }}</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <img class="img-responsive" alt="image" src="{% static unit.image.url %}"
+                                                 style="width: 200%">
+                                        </div>
+                                        <div class="col-md-4" id="right-modal">
+                                            <p id="info"><strong>Brand: </strong>{{ unit.brand }}</p>
+                                            <p id="info"><strong>Type: </strong>{{ unit.get_type_display }}</p>
+                                            <p id="info"><strong>Details: </strong>{{ unit.details }}</p>
+                                            {% if request.user.is_superuser %}
+                                                <p id="info"><strong>Acquisition Cost: P</strong>{{ unit.acquisition_cost|intcomma }}</p>
+                                                <p id="info"><strong>Hourly Service Rate: P</strong>{{ unit.hourly_service_rate|intcomma }}/hr</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    {% if request.user.is_superuser == False %}
+                                        <a href="{% url 'rental:addtocart' item_id=unit.id %}" type="button" class="btn btn-warning">Add to Cart</a>
+                                    {% else %}
+                                        <a href="{% url 'equipment:deleteequipment' primary_key=unit.id %}" type="button" class="btn btn-danger">Delete</a>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% endfor %}
+            {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    $(document).ready(function () {
+         /** CSRF FOR AJAX **/
+
+        function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+        }
+        var csrftoken = getCookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+        /** CSRF FOR AJAX **/
+
+
+        $("#submitEquipment").click(function(){
+            var eqname = $('#eq_name_input').val();
+            var brand = $('#eq_brand_input').val();
+            var acquisition = $('#eq_cost_input').val();
+            var details = $('#eq_details_input').val();
+            var type = $("#eq_type_input").find(":selected").val();
+            var service_rate = $('#eq_hsr_input').val();
+            var image = $('#eq_img_input').val();
+            var date = $('#datedate').val();
+
+
+            if(eqname === "")
+            {
+                $('#name_input').attr("class", 'form-group has-error');
+                $('#name_error').html("Please input name of equipment").removeAttr('hidden');
+            }
+
+            if(brand === "")
+            {
+                $('#brand_input').attr("class", 'form-group has-error');
+                $('#brand_error').html("Please input brand name of equipment").removeAttr('hidden');
+            }
+
+            if(acquisition === "")
+            {
+                $('#cost_input').attr("class", 'form-group has-error');
+                $('#cost_error').html("Please input acquisition cost of equipment").removeAttr('hidden');
+            }
+
+            if(details === "")
+            {
+                $('#details_input').attr("class", 'form-group has-error');
+                $('#details_error').html("Please input details of equipment").removeAttr('hidden');
+            }
+
+            if(service_rate === "")
+            {
+                $('#hsr_input').attr("class", 'form-group has-error');
+                $('#hsr_error').html("Please input hourly service cost of equipment").removeAttr('hidden');
+            }
+
+            if(image === "")
+            {
+                $('#img_input').attr("class", 'form-group has-error');
+                $('#img_error').html("Please input image of equipment").removeAttr('hidden');
+            }
+
+            if(date === "")
+            {
+                $('#date_input').attr("class", 'form-group has-error');
+                $('#date_error').html("Please input date of acquisition").removeAttr('hidden');
+            }
+
+            if(eqname !== "" && brand !== "" && acquisition !== "" && details !== "" && service_rate !== ""
+            && image !== "" && date !== "")
+            {
+                var fd = new FormData();
+                fd.append("name", eqname);
+                fd.append("brand", brand);
+                fd.append("acquisition_cost", acquisition);
+                fd.append("details", details);
+                fd.append("type", type);
+                fd.append("hourly_service_rate", service_rate);
+                fd.append('image', $('#eq_img_input')[0].files[0]);
+                fd.append('acquisition_date', date);
+                fd.append('status', 'AV');
+                $.ajax({
+                    type: "POST",
+                    url: "addequipment/",
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                    success: function (data) {
+                        if(data === "success")
+                            window.location.reload()
+                    }
+                })
+            }
+        });
+
+		$(".number").keydown(function (e) {
+        // Allow: backspace, delete, tab, escape, enter and .
+        if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
+             // Allow: Ctrl/cmd+A
+            (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+             // Allow: Ctrl/cmd+C
+            (e.keyCode === 67 && (e.ctrlKey === true || e.metaKey === true)) ||
+             // Allow: Ctrl/cmd+X
+            (e.keyCode === 88 && (e.ctrlKey === true || e.metaKey === true)) ||
+             // Allow: home, end, left, right
+            (e.keyCode >= 35 && e.keyCode <= 39)) {
+                 // let it happen, don't do anything
+                 return;
+        }
+        // Ensure that it is a number and stop the keypress
+        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+            e.preventDefault();
+        }
+    });
+    });
+</script>
+
+<script type="text/javascript">
+            $('#dateInput .input-group.date').datepicker({
+                format: "yyyy-mm-dd",
+                endDate: 'today'
+            });
+</script>
+
+</html>
